@@ -16,12 +16,31 @@ import java.util.Random;
  *   1) Change MapMarker to accept MarkerStyle directly
  *   2) Use MarkerStyleFactory.get(shape,color,size,filled) here
  */
+
+/**
+ * Responsible for generating markers.
+ *
+ * ORIGINAL PROBLEM:
+ * Every marker created a new MarkerStyle object,
+ * causing huge memory usage.
+ *
+ * CHANGES MADE:
+ * 1. Introduced MarkerStyleFactory.
+ * 2. Requested styles from factory instead of creating them.
+ *
+ * RESULT:
+ * Identical styles are reused across markers.
+ */
+
 public class MapDataSource {
 
     private static final String[] SHAPES = {"PIN", "CIRCLE", "SQUARE"};
     private static final String[] COLORS = {"RED", "BLUE", "GREEN", "ORANGE"};
     private static final int[] SIZES = {10, 12, 14, 16};
 
+    // Flyweight factory
+      private final MarkerStyleFactory styleFactory = new MarkerStyleFactory();
+      
     public List<MapMarker> loadMarkers(int count) {
         Random rnd = new Random(7);
         List<MapMarker> out = new ArrayList<>(count);
@@ -37,7 +56,12 @@ public class MapDataSource {
             int size = SIZES[rnd.nextInt(SIZES.length)];
             boolean filled = rnd.nextBoolean();
 
-            out.add(new MapMarker(lat, lng, label, shape, color, size, filled));
+            
+            //  Instead of creating new MarkerStyle,
+            //  request a shared instance from the factory.
+            MarkerStyle style = styleFactory.get(shape, color, size, filled);
+            // Create marker using shared style
+            out.add(new MapMarker(lat, lng, label, style));
         }
         return out;
     }
